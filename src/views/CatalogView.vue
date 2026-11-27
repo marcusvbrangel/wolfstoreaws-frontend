@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import ProductCard from '@/components/ProductCard.vue';
 import { useProductStore, type CategoryFilter } from '@/stores/productStore';
 import { useCartStore } from '@/stores/cartStore';
@@ -9,6 +9,7 @@ const store = useProductStore();
 const cart = useCartStore();
 const visibleCount = ref(12);
 const notification = ref('');
+const validatingProductIds = reactive(new Set<string>());
 let notificationTimer: ReturnType<typeof setTimeout> | undefined;
 
 const categories: { name: CategoryFilter; icon: string }[] = [
@@ -34,9 +35,22 @@ function notify(message: string) {
   notificationTimer = setTimeout(() => { notification.value = ''; }, 2400);
 }
 
-function addToCart(product: Product) {
-  const added = cart.addItem(product);
-  notify(added ? `${product.name} adicionado ao carrinho` : 'Você atingiu o estoque disponível deste produto.');
+async function addToCart(product: Product) {
+  if (validatingProductIds.has(product.id)) return;
+  validatingProductIds.add(product.id);
+
+  try {
+    const updatedProduct = await store.loadProductById(product.id);
+    if (!updatedProduct) {
+      notify(store.productErrorsById[product.id] || 'Não foi possível atualizar este produto.');
+      return;
+    }
+
+    const added = cart.addItem(updatedProduct);
+    notify(added ? `${updatedProduct.name} adicionado ao carrinho` : 'Você atingiu o estoque disponível deste produto.');
+  } finally {
+    validatingProductIds.delete(product.id);
+  }
 }
 
 function clearFilters() {
@@ -87,7 +101,7 @@ onBeforeUnmount(() => {
       <div class="results-row"><span>{{ store.filteredProducts.length }} {{ store.filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados' }}</span><button v-if="store.category !== 'Todas' || store.search || store.sortBy !== 'name'" type="button" class="clear-button" @click="clearFilters">Limpar filtros ×</button></div>
 
       <div v-if="shownProducts.length > 0" class="products-grid">
-        <ProductCard v-for="product in shownProducts" :key="product.id" :product="product" @add="addToCart" />
+        <ProductCard v-for="product in shownProducts" :key="product.id" :product="product" :loading="validatingProductIds.has(product.id)" @add="addToCart" />
       </div>
       <div v-else class="empty-state"><div class="empty-icon">⌕</div><h3>Nenhum produto encontrado</h3><p>Tente outro termo de pesquisa ou remova os filtros.</p><button class="button button-secondary" type="button" @click="clearFilters">Limpar filtros</button></div>
 

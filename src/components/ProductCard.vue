@@ -2,7 +2,7 @@
 import type { Product } from '@/types/Product';
 import { formatCurrency } from '@/utils/format';
 
-defineProps<{ product: Product }>();
+defineProps<{ product: Product; loading?: boolean }>();
 const emit = defineEmits<{ add: [product: Product] }>();
 </script>
 
@@ -20,9 +20,9 @@ const emit = defineEmits<{ add: [product: Product] }>();
       <p class="product-description">{{ product.description }}</p>
       <div class="card-bottom">
         <div class="price-block"><span class="small-muted">À vista</span><strong>{{ formatCurrency(product.price) }}</strong></div>
-        <button class="button button-primary add-button" type="button" @click="emit('add', product)" :disabled="product.stock === 0">
+        <button class="button button-primary add-button" type="button" @click="emit('add', product)" :disabled="product.stock === 0 || loading">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Adicionar
+          {{ loading ? 'Atualizando...' : 'Adicionar' }}
         </button>
       </div>
     </div>
