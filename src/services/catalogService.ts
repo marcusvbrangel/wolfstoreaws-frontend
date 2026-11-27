@@ -55,7 +55,6 @@ function parseProduct(value: unknown, index: number): Product {
 
   return product;
 }
-
 async function readJson(response: Response, invalidJsonMessage: string): Promise<unknown> {
   try {
     return await response.json();
@@ -71,7 +70,7 @@ export class CatalogNotFoundError extends Error {
   }
 }
 
-async function getCatalog(): Promise<Product[]> {
+export async function getCatalog(): Promise<Product[]> {
   const response = await fetch(CATALOG_URL, {
     headers: { Accept: 'application/json' },
   });
@@ -99,7 +98,7 @@ async function getCatalog(): Promise<Product[]> {
   return products;
 }
 
-async function getProductById(id: string): Promise<Product> {
+export async function getProductById(id: string): Promise<Product> {
   const productId = id.trim();
   if (!productId) throw new Error('O ID do produto é obrigatório.');
 
@@ -123,8 +122,3 @@ async function getProductById(id: string): Promise<Product> {
 
   return product;
 }
-
-export const catalogService = {
-  getCatalog,
-  getProductById,
-};

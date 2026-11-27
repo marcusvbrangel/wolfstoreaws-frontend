@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
 import {
   CatalogNotFoundError,
-  catalogService,
+  getCatalog,
+  getProductById,
 } from "@/services/catalogService";
 import type { Category, Product } from "@/types/Product";
 
@@ -83,7 +84,7 @@ export const useProductStore = defineStore("products", {
         else this.status = "loading";
 
         request = {
-          promise: catalogService.getCatalog(),
+          promise: getCatalog(),
           startedRevision: dataRevision,
         };
         catalogRequest = request;
@@ -136,7 +137,7 @@ export const useProductStore = defineStore("products", {
 
       let request = productRequests.get(productId);
       if (!request) {
-        request = catalogService.getProductById(productId);
+        request = getProductById(productId);
         productRequests.set(productId, request);
       }
 
